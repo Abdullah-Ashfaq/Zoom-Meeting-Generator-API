@@ -4,6 +4,9 @@ require('dotenv').config();
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const axios = require('axios');
+const db = require('./config/dbConfig')
+const meetingsModel = require('./models/meetingsModel')
+var mongoose = require('mongoose')
 
 const port = 5000;
 
@@ -68,6 +71,14 @@ app.post("/createZoomMeeting", async (req, res) => {
         }
 
         const response_data = meetingResponse.data;
+        const meeting = new meetingsModel({
+            "topic": response_data.topic,
+            "duration": response_data.duration,
+            "startTime": response_data.start_time,
+            "meetingLink": response_data.join_url
+        })
+
+        await meeting.save();
 
         const content = {
             meeting_url: response_data.join_url,
@@ -86,6 +97,31 @@ app.post("/createZoomMeeting", async (req, res) => {
         return res.status(500).json({ message: 'Internal server error' });
     }
 });
+
+// DELETE endpoint to delete a meeting by ID
+app.delete('/meetings/:id', async (req, res) => {
+    try {
+      const meetingId = req.params.id;
+  
+      // Check if the provided ID is valid
+      if (!mongoose.Types.ObjectId.isValid(meetingId)) {
+        return res.status(400).json({ error: 'Invalid meeting ID' });
+      }
+  
+      // Find the meeting by ID and delete it
+      const deletedMeeting = await meetingsModel.findByIdAndDelete(meetingId);
+  
+      // Check if the meeting exists
+      if (!deletedMeeting) {
+        return res.status(404).json({ error: 'Meeting not found' });
+      }
+  
+      res.status(200).json({ message: 'Meeting deleted successfully', deletedMeeting });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
 
 app.get("/", (req, res) => {
     console.log("project is running");
