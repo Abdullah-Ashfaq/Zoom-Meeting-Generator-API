@@ -123,6 +123,25 @@ app.delete('/meetings/:id', async (req, res) => {
     }
   });
 
+  app.get("/getAllMeetings", async (req, res) => {
+    try {
+        // Retrieve all meetings from the database
+        const meetings = await meetingsModel.find({});
+        
+        // Check if meetings exist
+        if (meetings.length === 0) {
+            // No meetings found
+            return res.status(404).json({ message: "No meetings found" });
+        }
+        
+        // Return the meetings as a JSON response
+        res.status(200).json(meetings);
+    } catch (error) {
+        console.error('Error fetching meetings:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 app.get("/", (req, res) => {
     console.log("project is running");
     return res.status(200).json({ message: "project is running" });
